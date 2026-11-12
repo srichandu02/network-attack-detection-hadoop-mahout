@@ -155,6 +155,7 @@ The project generates the following output files:
 | top_10_attack_sources.txt | Top 10 source IPs |
 | attack_destination_ports.txt | Destination port analysis |
 | random_forest_evaluation.txt | Random Forest accuracy and confusion matrix |
+| traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (from `mapper.py` + `reducer.py` on `network_traffic_sample.csv`) |
 
 ## 9. Screenshots
 
