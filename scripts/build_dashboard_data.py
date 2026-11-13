@@ -94,6 +94,7 @@ data = {
     "traffic_summary_sample": read_summary("traffic_summary_sample.txt"),
     "traffic_summary": read_summary("traffic_summary.txt"),
     "random_forest": read_rf_evaluation("random_forest_evaluation.txt"),
+    "random_forest_sample": read_rf_evaluation("random_forest_sample_evaluation.txt"),
 }
 
 os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)

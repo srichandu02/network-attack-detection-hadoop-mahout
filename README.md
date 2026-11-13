@@ -144,6 +144,26 @@ bash run_mahout_random_forest.sh
 
 The evaluation output is saved in `results/random_forest_evaluation.txt`.
 
+### Local check on sample data (scikit-learn)
+
+The same features and settings (50 trees, 7 features per split, seed 42) were also run locally with scikit-learn on `network_traffic_sample.csv` (5,000 records, 70/30 split):
+
+```bash
+cd scripts
+python3 prepare_ml_data.py ../dataset/network_traffic_sample.csv ../dataset/ml_data_sample
+python3 train_local_random_forest.py ../dataset/ml_data_sample ../models ../results
+```
+
+| Metric | Value |
+|---|---|
+| Test records | 1,492 |
+| Accuracy | 99.93% (1,491 correct, 1 wrong) |
+| Kappa | 0.9915 |
+| Attack recall | 100% (61 / 61) |
+| Attack precision | 98.39% |
+
+Model: `models/random_forest_sample_sklearn.joblib` · Report: `results/random_forest_sample_evaluation.txt`
+
 ## 8. Results
 
 The project generates the following output files:
@@ -155,6 +175,7 @@ The project generates the following output files:
 | top_10_attack_sources.txt | Top 10 source IPs |
 | attack_destination_ports.txt | Destination port analysis |
 | random_forest_evaluation.txt | Random Forest accuracy and confusion matrix |
+| random_forest_sample_evaluation.txt | Local Random Forest results on the 5,000-record sample |
 | traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (from `mapper.py` + `reducer.py` on `network_traffic_sample.csv`) |
 
 ### Dashboard

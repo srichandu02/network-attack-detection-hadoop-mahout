@@ -1,0 +1,24 @@
+Random Forest - local scikit-learn run (sample data)
+====================================================
+Train records : 3508
+Test records  : 1492
+Trees: 50 | Features per split: 7 | Seed: 42
+
+Correctly Classified Instances   : 1491   99.9330%
+Incorrectly Classified Instances : 1   0.0670%
+Kappa : 0.9915
+
+Confusion Matrix (rows = actual, columns = predicted)
+               normal     attack
+normal           1430          1
+attack              0         61
+
+              precision    recall  f1-score   support
+
+      normal     1.0000    0.9993    0.9997      1431
+      attack     0.9839    1.0000    0.9919        61
+
+    accuracy                         0.9993      1492
+   macro avg     0.9919    0.9997    0.9958      1492
+weighted avg     0.9993    0.9993    0.9993      1492
+

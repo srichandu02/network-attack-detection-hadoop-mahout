@@ -438,11 +438,16 @@ renderBars("categoryChart", summary && summary.ATTACK_CATEGORY);
 renderBars("protocolChart", summary && summary.PROTOCOL);
 
 // model result
-const rf = DATA.random_forest;
+const rfFull = DATA.random_forest && DATA.random_forest.accuracy !== undefined;
+const rf = rfFull ? DATA.random_forest : DATA.random_forest_sample;
 const modelEl = document.getElementById("modelResult");
 if (rf && rf.accuracy !== undefined) {
+  const source = rfFull
+    ? "Mahout run on the full dataset"
+    : "local scikit-learn run on <code>network_traffic_sample.csv</code> (5,000 records, same features and settings)";
+  const total = (rf.correct || 0) + (rf.incorrect || 0);
   modelEl.innerHTML =
-    `<div class="summary-box"><b>Result:</b> Random Forest classified ${fmt(rf.correct || 0)} test records correctly ` +
+    `<div class="summary-box"><b>Result (${source}):</b> Random Forest classified ${fmt(rf.correct || 0)} of ${fmt(total)} test records correctly ` +
     `– accuracy <b>${rf.accuracy}%</b>` + (rf.kappa !== undefined ? `, Kappa <b>${rf.kappa}</b>` : "") + `.</div>` +
     `<pre class="raw">${rf.raw.replace(/</g, "&lt;")}</pre>`;
 }
