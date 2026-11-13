@@ -86,6 +86,37 @@ def read_rf_evaluation(filename):
     return result
 
 
+def read_mahout_logistic(filename):
+    """Picks AUC and the confusion matrix from Mahout runlogistic output."""
+    path = os.path.join(RESULTS, filename)
+    if not os.path.exists(path):
+        return None
+
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        text = f.read()
+
+    result = {"raw": text[-6000:]}
+
+    match = re.search(r"Input data\s*:\s*(\S+)", text)
+    if match:
+        result["sample"] = "sample" in match.group(1)
+
+    match = re.search(r"AUC\s*=\s*([\d.]+)", text)
+    if match:
+        result["auc"] = float(match.group(1))
+
+    match = re.search(r"confusion:\s*\[\[([\d.]+),\s*([\d.]+)\],\s*\[([\d.]+),\s*([\d.]+)\]\]", text)
+    if match:
+        a, b, c, d = (float(x) for x in match.groups())
+        total = a + b + c + d
+        if total > 0:
+            result["correct"] = int(a + d)
+            result["incorrect"] = int(b + c)
+            result["accuracy"] = round((a + d) / total * 100, 4)
+
+    return result
+
+
 data = {
     "attack_sources": read_counts("attack_sources.txt"),
     "top_10_attack_sources": read_counts("top_10_attack_sources.txt"),
@@ -95,6 +126,7 @@ data = {
     "traffic_summary": read_summary("traffic_summary.txt"),
     "random_forest": read_rf_evaluation("random_forest_evaluation.txt"),
     "random_forest_sample": read_rf_evaluation("random_forest_sample_evaluation.txt"),
+    "mahout_logistic": read_mahout_logistic("mahout_logistic_evaluation.txt"),
 }
 
 os.makedirs(os.path.dirname(OUT_FILE), exist_ok=True)

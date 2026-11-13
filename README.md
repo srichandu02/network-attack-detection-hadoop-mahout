@@ -11,7 +11,7 @@ The system processes network traffic records and identifies suspicious patterns 
 - Unusual network service activity.
 - Potential Denial-of-Service (DoS) patterns.
 
-It also trains a machine learning model (Random Forest using Apache Mahout) to classify each network record as **normal** or **attack**.
+It also trains machine learning models (Logistic Regression with Apache Mahout and Random Forest with scikit-learn) to classify each network record as **normal** or **attack**.
 
 ## 2. Objectives
 
@@ -21,7 +21,7 @@ It also trains a machine learning model (Random Forest using Apache Mahout) to c
 - Analyze frequently targeted network services.
 - Identify commonly attacked destination ports.
 - Generate summarized attack analysis reports.
-- Classify network traffic as normal or attack using Mahout Random Forest.
+- Classify network traffic as normal or attack using machine learning.
 
 ## 3. Technologies Used
 
@@ -31,32 +31,40 @@ It also trains a machine learning model (Random Forest using Apache Mahout) to c
 | Apache Hadoop 3.3.6 | Distributed data processing |
 | HDFS | Distributed file storage |
 | MapReduce | Parallel data processing |
-| Apache Mahout | Machine learning (Random Forest classifier) |
-| Python 3 | Mapper and Reducer scripts |
+| Apache Mahout 0.13 | Machine learning (Logistic Regression, SGD) |
+| scikit-learn | Random Forest classifier |
+| Python 3 | Mapper / Reducer scripts and data preparation |
 | Java 11 | Hadoop execution environment |
 | UNSW-NB15 | Network intrusion detection dataset |
 
 ## 4. Project Structure
 
 ```text
-network_traffic_analysis_github/
+network-attack-detection-hadoop-mahout/
 │
 ├── dataset/
 │   ├── NUSW-NB15_features.csv
 │   └── network_traffic_sample.csv
 │
+├── dashboard/
+│   ├── index.html
+│   └── data.js
+│
 ├── documentation/
 │   └── screenshots/
 │
 ├── models/
-│   └── random_forest/        (saved after running the model)
+│   ├── random_forest_sample_sklearn.joblib
+│   └── mahout_logistic.model              (created by run_mahout_logistic.sh)
 │
 ├── results/
 │   ├── attack_sources.txt
 │   ├── attack_services.txt
 │   ├── top_10_attack_sources.txt
 │   ├── attack_destination_ports.txt
-│   └── random_forest_evaluation.txt   (created after running the model)
+│   ├── traffic_summary_sample.txt
+│   ├── random_forest_sample_evaluation.txt
+│   └── mahout_logistic_evaluation.txt     (created by run_mahout_logistic.sh)
 │
 ├── scripts/
 │   ├── mapper.py
@@ -65,14 +73,17 @@ network_traffic_analysis_github/
 │   ├── mapper_port.py
 │   ├── mapper_service.py
 │   ├── prepare_ml_data.py
-│   └── run_mahout_random_forest.sh
+│   ├── prepare_mahout_logistic.py
+│   ├── run_mahout_logistic.sh
+│   ├── train_local_random_forest.py
+│   └── build_dashboard_data.py
 │
 └── README.md
 ```
 
 ## 5. Dataset Description
 
-The project uses the UNSW-NB15 network intrusion detection dataset.
+The project uses the UNSW-NB15 network intrusion detection dataset (UNSW Canberra Cyber).
 
 The dataset contains network traffic information used for analyzing normal and suspicious network activities.
 
@@ -107,16 +118,14 @@ The project performs:
 3. Network service analysis.
 4. Top 10 suspicious source IP analysis.
 
-## 7. Machine Learning using Apache Mahout
+## 7. Machine Learning
 
 | Item | Details |
 |---|---|
 | ML problem type | Classification (binary: normal / attack) |
 | Target column | `Label` (0 = normal, 1 = attack) |
-| ML model used | Random Forest (Apache Mahout, MapReduce) |
-| Best performing model | Random Forest |
+| Models | Logistic Regression (Apache Mahout, SGD), Random Forest (scikit-learn) |
 | Train / test split | 70% / 30% (random, seed 42) |
-| Number of trees | 50 |
 | Features | 41 (3 categorical + 38 numeric) |
 
 ### Features used
@@ -124,29 +133,32 @@ The project performs:
 - Categorical: `proto`, `state`, `service`
 - Numeric: duration, bytes, TTL values, packet loss, load, packet counts, TCP window and sequence values, mean packet size, jitter, inter-packet time, TCP round-trip times and the connection count features (`ct_*`).
 
-Source/destination IPs, ports and timestamps are removed so the model learns traffic behaviour instead of memorising addresses. `attack_cat` is also removed because it directly gives away the label.
+Source/destination IPs, ports and timestamps are removed so the models learn traffic behaviour instead of memorising addresses. `attack_cat` is also removed because it directly gives away the label.
 
-### Steps
+### Model 1: Logistic Regression with Apache Mahout
 
-1. `prepare_ml_data.py` cleans the records, converts the label to `normal` / `attack` and splits the data into `train.csv` and `test.csv`.
-2. Train and test files are uploaded to HDFS.
-3. `mahout describe` creates the dataset descriptor (`3 C 38 N L`).
-4. `mahout buildforest` trains a 50-tree Random Forest using the partial (MapReduce) implementation.
-5. `mahout testforest` predicts the test data and prints accuracy, the confusion matrix and the Kappa value.
-6. The trained forest is copied to `models/random_forest/`.
+The lab cluster runs Mahout 0.13. `mahout describe` works there, but `buildforest` / `testforest` (Random Forest) are not part of that build, so the Mahout model uses `trainlogistic` / `runlogistic` (Logistic Regression trained with stochastic gradient descent).
 
-### How to run
+Steps (`scripts/run_mahout_logistic.sh`):
+
+1. `prepare_ml_data.py` cleans the records, converts the label to `normal` / `attack` and splits the data into train and test sets.
+2. `prepare_mahout_logistic.py` adds a header row and scales the numeric columns (log + min-max, using training data only).
+3. The prepared files are stored in HDFS.
+4. `mahout trainlogistic` trains the model (5 passes, 200 hashed features).
+5. `mahout runlogistic` tests the model and prints AUC and the confusion matrix.
+6. The dashboard data is refreshed.
 
 ```bash
-cd ~/network_traffic_analysis/scripts
-bash run_mahout_random_forest.sh
+cd ~/network-attack-detection-hadoop-mahout
+bash scripts/run_mahout_logistic.sh                    # full dataset
+bash scripts/run_mahout_logistic.sh dataset/network_traffic_sample.csv   # sample
 ```
 
-The evaluation output is saved in `results/random_forest_evaluation.txt`.
+Output: `results/mahout_logistic_evaluation.txt`, model: `models/mahout_logistic.model`.
 
-### Local check on sample data (scikit-learn)
+### Model 2: Random Forest with scikit-learn (sample data)
 
-The same features and settings (50 trees, 7 features per split, seed 42) were also run locally with scikit-learn on `network_traffic_sample.csv` (5,000 records, 70/30 split):
+Random Forest with 50 trees and 7 features per split, run on `network_traffic_sample.csv` (5,000 records):
 
 ```bash
 cd scripts
@@ -166,21 +178,19 @@ Model: `models/random_forest_sample_sklearn.joblib` · Report: `results/random_f
 
 ## 8. Results
 
-The project generates the following output files:
-
 | Output File | Description |
 |---|---|
 | attack_sources.txt | Source IP analysis |
 | attack_services.txt | Network service analysis |
 | top_10_attack_sources.txt | Top 10 source IPs |
 | attack_destination_ports.txt | Destination port analysis |
-| random_forest_evaluation.txt | Random Forest accuracy and confusion matrix |
-| random_forest_sample_evaluation.txt | Local Random Forest results on the 5,000-record sample |
-| traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (from `mapper.py` + `reducer.py` on `network_traffic_sample.csv`) |
+| traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (`mapper.py` + `reducer.py` on the sample) |
+| random_forest_sample_evaluation.txt | Random Forest results on the 5,000-record sample |
+| mahout_logistic_evaluation.txt | Mahout Logistic Regression AUC and confusion matrix |
 
 ### Dashboard
 
-An interactive dashboard (`dashboard/index.html`) shows the result files: attacked ports, services, source IP frequency, traffic summary, the Random Forest model details and a searchable results explorer with CSV download.
+An interactive dashboard (`dashboard/index.html`) shows the result files: attacked ports, services, source IP frequency, traffic summary, model comparison and a searchable results explorer with CSV download.
 
 ```bash
 # refresh dashboard data after adding new result files
@@ -191,7 +201,7 @@ Open `dashboard/index.html` in a browser, or enable GitHub Pages for the reposit
 
 ## 9. Screenshots
 
-Execution screenshots and result demonstrations are available in:
+Execution screenshots (Hadoop jobs, HDFS directories, Mahout runs) are available in:
 
 `documentation/screenshots/`
 
@@ -199,12 +209,12 @@ Execution screenshots and result demonstrations are available in:
 
 This project demonstrates how Apache Hadoop and MapReduce can be used to analyze network traffic data at scale.
 
-By aggregating network traffic information based on source IP addresses, destination ports, and services, the system helps identify potentially suspicious network activity and supports basic network security analysis. The Mahout Random Forest model extends this by automatically classifying network records as normal or attack traffic.
+By aggregating network traffic information based on source IP addresses, destination ports, and services, the system helps identify potentially suspicious network activity and supports basic network security analysis. The machine learning models extend this by automatically classifying network records as normal or attack traffic.
 
 ## 11. Future Enhancements
 
 - Real-time network traffic monitoring.
 - Multi-class classification of attack categories (DoS, Exploits, Fuzzers, etc.).
-- Interactive network security dashboard.
+- Detection of unusual request bursts using time-window analysis.
 - Automated suspicious activity alerts.
 - Integration with additional intrusion detection datasets.

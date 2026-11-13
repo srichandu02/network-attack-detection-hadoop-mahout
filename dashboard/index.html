@@ -300,18 +300,11 @@ pre.raw { background: var(--track); padding: 12px; border-radius: 8px; overflow:
 
     <section class="section" id="model">
       <div class="card">
-        <h2>ML Model – Apache Mahout Random Forest</h2>
-        <div class="desc">Binary classification of network records as normal or attack</div>
+        <h2>ML Models – Normal vs Attack Classification</h2>
+        <div class="desc">41 features (3 categorical + 38 numeric), 70% / 30% train-test split, seed 42</div>
         <table>
-          <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
-          <tbody>
-            <tr><td><b>Problem type</b></td><td>Classification</td><td>Target column <code>Label</code> (0 = normal, 1 = attack)</td></tr>
-            <tr><td><b>Model</b></td><td>Random Forest</td><td>Mahout <code>buildforest</code> (partial MapReduce implementation)</td></tr>
-            <tr><td><b>Trees</b></td><td class="num">50</td><td>Number of decision trees in the forest</td></tr>
-            <tr><td><b>Features per node</b></td><td class="num">7</td><td>About √41 features tried at each split</td></tr>
-            <tr><td><b>Features</b></td><td class="num">41</td><td>3 categorical (proto, state, service) + 38 numeric</td></tr>
-            <tr><td><b>Train / test split</b></td><td class="num">70% / 30%</td><td>Random split, seed 42</td></tr>
-          </tbody>
+          <thead><tr><th>Model</th><th>Platform</th><th>Settings</th><th>Data</th><th>Accuracy</th><th>Kappa / AUC</th></tr></thead>
+          <tbody id="modelRows"></tbody>
         </table>
         <div id="modelResult"></div>
       </div>
@@ -438,18 +431,31 @@ renderBars("categoryChart", summary && summary.ATTACK_CATEGORY);
 renderBars("protocolChart", summary && summary.PROTOCOL);
 
 // model result
-const rfFull = DATA.random_forest && DATA.random_forest.accuracy !== undefined;
-const rf = rfFull ? DATA.random_forest : DATA.random_forest_sample;
+const models = [
+  { name: "Logistic Regression", platform: "Apache Mahout (SGD)", settings: "5 passes, 200 hashed features",
+    data: DATA.mahout_logistic && DATA.mahout_logistic.sample ? "Sample (5,000 records)" : "Full dataset", res: DATA.mahout_logistic, score: r => r.auc !== undefined ? "AUC " + r.auc : "–" },
+  { name: "Random Forest", platform: "scikit-learn", settings: "50 trees, 7 features per split",
+    data: "Sample (5,000 records)", res: DATA.random_forest_sample, score: r => r.kappa !== undefined ? "Kappa " + r.kappa : "–" },
+].filter(m => m.res && m.res.accuracy !== undefined);
+
 const modelEl = document.getElementById("modelResult");
-if (rf && rf.accuracy !== undefined) {
-  const source = rfFull
-    ? "Mahout run on the full dataset"
-    : "local scikit-learn run on <code>network_traffic_sample.csv</code> (5,000 records, same features and settings)";
-  const total = (rf.correct || 0) + (rf.incorrect || 0);
+document.getElementById("modelRows").innerHTML = models.map(m => {
+  const total = (m.res.correct || 0) + (m.res.incorrect || 0);
+  return `<tr><td><b>${m.name}</b></td><td>${m.platform}</td><td>${m.settings}</td>` +
+    `<td>${m.data} – ${fmt(total)} test records</td><td class="num"><b>${m.res.accuracy}%</b></td>` +
+    `<td class="num">${m.score(m.res)}</td></tr>`;
+}).join("");
+
+if (models.length) {
+  const best = models.reduce((a, b) => (b.res.accuracy > a.res.accuracy ? b : a));
   modelEl.innerHTML =
-    `<div class="summary-box"><b>Result (${source}):</b> Random Forest classified ${fmt(rf.correct || 0)} of ${fmt(total)} test records correctly ` +
-    `– accuracy <b>${rf.accuracy}%</b>` + (rf.kappa !== undefined ? `, Kappa <b>${rf.kappa}</b>` : "") + `.</div>` +
-    `<pre class="raw">${rf.raw.replace(/</g, "&lt;")}</pre>`;
+    `<div class="summary-box"><b>Summary:</b> ` +
+    (models.length > 1
+      ? `${best.name} (${best.platform}) achieved the highest accuracy at <b>${best.res.accuracy}%</b>.`
+      : `${best.name} (${best.platform}) classified ${fmt(best.res.correct || 0)} of ${fmt((best.res.correct || 0) + (best.res.incorrect || 0))} test records correctly – accuracy <b>${best.res.accuracy}%</b>.`) +
+    `</div>` +
+    models.map(m => `<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--text-2)">${m.name} – full output</summary>` +
+      `<pre class="raw">${m.res.raw.replace(/</g, "&lt;")}</pre></details>`).join("");
 }
 
 // results explorer
