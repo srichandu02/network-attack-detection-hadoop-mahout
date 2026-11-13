@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetGuard Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --sidebar: #ffffff;
+  --border: #e5e7eb;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #8a8984;
+  --accent: #1f4e8c;
+  --accent-soft: #e8eff8;
+  --accent-ink: #ffffff;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --track: #eef0f3;
+  --grid: #eceef1;
+  --pending: #fff7e6;
+  --pending-ink: #8a5a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121212;
+    --surface: #1a1a19;
+    --sidebar: #161615;
+    --border: #2c2c2a;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #8f8e86;
+    --accent: #3987e5;
+    --accent-soft: #1d2a3b;
+    --accent-ink: #ffffff;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --track: #242422;
+    --grid: #262624;
+    --pending: #2b2414;
+    --pending-ink: #e6b85c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121212;
+  --surface: #1a1a19;
+  --sidebar: #161615;
+  --border: #2c2c2a;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #8f8e86;
+  --accent: #3987e5;
+  --accent-soft: #1d2a3b;
+  --accent-ink: #ffffff;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --track: #242422;
+  --grid: #262624;
+  --pending: #2b2414;
+  --pending-ink: #e6b85c;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+}
+a { color: inherit; }
+
+.layout { display: flex; min-height: 100vh; }
+
+/* sidebar */
+.sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.brand { display: flex; gap: 10px; align-items: center; margin-bottom: 28px; }
+.brand-icon {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid var(--accent);
+  display: grid; place-items: center; color: var(--accent);
+}
+.brand b { display: block; font-size: 15px; }
+.brand small { color: var(--accent); font-size: 11px; font-weight: 600; }
+.menu-title { color: var(--muted); font-size: 11px; letter-spacing: .06em; margin: 0 8px 8px; }
+.nav a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; margin-bottom: 2px;
+  border-radius: 8px; text-decoration: none; color: var(--text-2);
+}
+.nav a:hover { background: var(--track); }
+.nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav svg { width: 16px; height: 16px; flex-shrink: 0; }
+.links { margin-top: auto; border-top: 1px solid var(--border); padding-top: 14px; }
+.links a { display: block; padding: 6px 8px; color: var(--text-2); text-decoration: none; font-size: 13px; }
+.links a:hover { color: var(--accent); }
+
+/* main */
+main { flex: 1; min-width: 0; padding: 28px 36px 60px; }
+.page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 22px; }
+.sub { color: var(--text-2); margin-top: 4px; }
+.btn {
+  background: var(--accent); color: var(--accent-ink);
+  border: 0; border-radius: 999px; padding: 9px 18px;
+  font: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.1); }
+.theme-btn {
+  background: var(--surface); color: var(--text-2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; cursor: pointer; margin-right: 8px;
+}
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+.kpi.hero { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.kpi .label { font-size: 13px; color: var(--text-2); }
+.kpi.hero .label { color: rgba(255,255,255,.85); }
+.kpi .value { font-size: 28px; font-weight: 700; margin: 8px 0 10px; font-variant-numeric: tabular-nums; }
+.chip { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.kpi.hero .chip { background: rgba(255,255,255,.18); color: #fff; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 22px; }
+.card h2 { margin: 0; font-size: 16px; }
+.card .desc { color: var(--text-2); font-size: 13px; margin: 4px 0 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.grid-2 > .card { margin-bottom: 0; }
+.section { scroll-margin-top: 20px; margin-bottom: 22px; }
+.tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--track); color: var(--text-2); margin-left: 6px; vertical-align: middle; }
+
+/* horizontal bar chart */
+.bars { display: flex; flex-direction: column; gap: 2px; }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 84px; align-items: center; gap: 10px; padding: 5px 4px; border-radius: 6px; cursor: default; }
+.bar-row:hover { background: var(--track); }
+.bar-label { color: var(--text-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { height: 14px; position: relative; }
+.bar-fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--series-1); min-width: 2px; }
+.bar-value { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); font-size: 13px; }
+
+.split { display: flex; height: 26px; gap: 2px; margin: 8px 0 12px; }
+.split div { height: 100%; }
+.split div:first-child { border-radius: 4px 0 0 4px; }
+.split div:last-child { border-radius: 0 4px 4px 0; }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 50;
+  background: #111827; color: #fff; padding: 8px 10px; border-radius: 8px;
+  font-size: 12px; line-height: 1.5; opacity: 0; transition: opacity .1s;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.tooltip b { display: block; }
+
+/* model table */
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+th { font-size: 13px; color: var(--text); font-weight: 600; }
+td { color: var(--text-2); }
+td.num { font-variant-numeric: tabular-nums; }
+.pending-box { background: var(--pending); color: var(--pending-ink); border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 13px; line-height: 1.6; }
+.pending-box code, .note code { background: rgba(0,0,0,.06); padding: 1px 6px; border-radius: 4px; }
+.summary-box { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+pre.raw { background: var(--track); padding: 12px; border-radius: 8px; overflow: auto; font-size: 12px; max-height: 260px; }
+
+/* explorer */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tabs button {
+  border: 1px solid var(--border); background: var(--track); color: var(--text-2);
+  padding: 6px 12px; border-radius: 999px; font: inherit; font-size: 12px; cursor: pointer;
+}
+.tabs button.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.toolbar input {
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 13px; width: 220px; max-width: 100%;
+}
+.toolbar .meta { color: var(--text-2); font-size: 13px; }
+.explorer-table th { cursor: pointer; user-select: none; }
+.explorer-table th:hover { color: var(--accent); }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; color: var(--text-2); font-size: 13px; }
+.pager button { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 12px; }
+.pager button:disabled { opacity: .4; cursor: default; }
+.note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; padding: 14px 16px; }
+  .brand { margin-bottom: 12px; }
+  .nav { display: flex; overflow-x: auto; gap: 4px; }
+  .nav a { white-space: nowrap; }
+  .menu-title, .links { display: none; }
+  main { padding: 20px 16px 40px; }
+  .kpi .value { font-size: 22px; }
+  .bar-row { grid-template-columns: 84px 1fr 70px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg>
+      </div>
+      <div><b>NetGuard</b><small>Big Data Analytics</small></div>
+    </div>
+    <div class="menu-title">MENU</div>
+    <nav class="nav">
+      <a href="#overview" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overview</a>
+      <a href="#attacks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Attack Analysis</a>
+      <a href="#traffic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>Traffic Summary</a>
+      <a href="#model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5-6.5-4.5L5.5 21l2-7.5L2 9h7z"/></svg>ML Model</a>
+      <a href="#explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>Results Explorer</a>
+    </nav>
+    <div class="links">
+      <div class="menu-title">LINKS</div>
+      <a href="https://github.com/srichandu02/network-attack-detection-hadoop-mahout" target="_blank" rel="noopener">GitHub Repo ↗</a>
+      <a href="https://research.unsw.edu.au/projects/unsw-nb15-dataset" target="_blank" rel="noopener">UNSW-NB15 Dataset ↗</a>
+    </div>
+  </aside>
+
+  <main>
+    <div class="page-head" id="overview">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="sub">Large-Scale Network Traffic Analysis for Attack Pattern Detection (UNSW-NB15)</div>
+      </div>
+      <div>
+        <button class="theme-btn" id="themeBtn">Toggle theme</button>
+        <button class="btn" id="downloadBtn">Download Active CSV</button>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="section" id="attacks">
+      <div class="grid-2">
+        <div class="card">
+          <h2>Top 10 Attacked Destination Ports</h2>
+          <div class="desc">Attack records per destination port (MapReduce: <code>mapper_port.py</code>)</div>
+          <div class="bars" id="portChart"></div>
+        </div>
+        <div class="card">
+          <h2>Attacks by Network Service</h2>
+          <div class="desc">Attack records per service (MapReduce: <code>mapper_service.py</code>)</div>
+          <div class="bars" id="serviceChart"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <h2>Attack Source IP Frequency</h2>
+        <div class="desc">Attack records sent from each source IP (MapReduce: <code>mapper_ip.py</code>)</div>
+        <div class="bars" id="sourceChart"></div>
+      </div>
+    </section>
+
+    <section class="section" id="traffic">
+      <div class="card">
+        <h2>Traffic Summary <span class="tag" id="summaryTag"></span></h2>
+        <div class="desc" id="summaryDesc"></div>
+        <div id="labelSplit"></div>
+        <div class="grid-2" style="margin-top:18px">
+          <div>
+            <h2 style="font-size:14px">Attack Categories</h2>
+            <div class="bars" id="categoryChart" style="margin-top:10px"></div>
+          </div>
+          <div>
+            <h2 style="font-size:14px">Protocols</h2>
+            <div class="bars" id="protocolChart" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="model">
+      <div class="card">
+        <h2>ML Model – Apache Mahout Random Forest</h2>
+        <div class="desc">Binary classification of network records as normal or attack</div>
+        <table>
+          <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><b>Problem type</b></td><td>Classification</td><td>Target column <code>Label</code> (0 = normal, 1 = attack)</td></tr>
+            <tr><td><b>Model</b></td><td>Random Forest</td><td>Mahout <code>buildforest</code> (partial MapReduce implementation)</td></tr>
+            <tr><td><b>Trees</b></td><td class="num">50</td><td>Number of decision trees in the forest</td></tr>
+            <tr><td><b>Features per node</b></td><td class="num">7</td><td>About √41 features tried at each split</td></tr>
+            <tr><td><b>Features</b></td><td class="num">41</td><td>3 categorical (proto, state, service) + 38 numeric</td></tr>
+            <tr><td><b>Train / test split</b></td><td class="num">70% / 30%</td><td>Random split, seed 42</td></tr>
+          </tbody>
+        </table>
+        <div id="modelResult"></div>
+      </div>
+    </section>
+
+    <section class="section" id="explorer">
+      <div class="card">
+        <h2>Results Explorer</h2>
+        <div class="desc">Inspect, filter, sort and download the generated result files.</div>
+        <div class="tabs" id="tabs"></div>
+        <div class="toolbar">
+          <input type="search" id="search" placeholder="Search rows…">
+          <span class="meta" id="rowMeta"></span>
+        </div>
+        <table class="explorer-table">
+          <thead id="exHead"></thead>
+          <tbody id="exBody"></tbody>
+        </table>
+        <div class="pager">
+          <span id="pageInfo"></span>
+          <span><button id="prevBtn">Prev</button> <button id="nextBtn">Next</button></span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script src="data.js"></script>
+<script>
+const DATA = window.DASHBOARD_DATA || {};
+const fmt = n => n.toLocaleString("en-US");
+const pct = (n, total) => (total ? (n / total * 100).toFixed(2) : "0.00") + "%";
+const sum = rows => (rows || []).reduce((s, r) => s + r[1], 0);
+
+// theme toggle
+const themeBtn = document.getElementById("themeBtn");
+themeBtn.onclick = () => {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+};
+
+// tooltip
+const tip = document.getElementById("tooltip");
+function showTip(e, html) {
+  tip.innerHTML = html;
+  tip.style.opacity = 1;
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 10);
+  tip.style.left = x + "px";
+  tip.style.top = (e.clientY + 14) + "px";
+}
+function hideTip() { tip.style.opacity = 0; }
+
+// horizontal bars
+function renderBars(id, rows, opts = {}) {
+  const el = document.getElementById(id);
+  if (!rows || !rows.length) {
+    el.innerHTML = '<div class="note">No data – result file not found.</div>';
+    return;
+  }
+  const total = opts.total || sum(rows);
+  const max = Math.max(...rows.map(r => r[1]));
+  el.innerHTML = "";
+  rows.forEach(([name, value]) => {
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    const label = opts.prefix ? opts.prefix + name : name;
+    row.innerHTML =
+      `<span class="bar-label" title="${label}">${label}</span>` +
+      `<div class="bar-track"><div class="bar-fill" style="width:${value / max * 100}%"></div></div>` +
+      `<span class="bar-value">${fmt(value)}</span>`;
+    row.onmousemove = e => showTip(e, `<b>${label}</b>${fmt(value)} records (${pct(value, total)})`);
+    row.onmouseleave = hideTip;
+    el.appendChild(row);
+  });
+}
+
+// KPIs
+const totalAttacks = sum(DATA.attack_services);
+const kpis = [
+  { label: "Attack Records Analysed", value: fmt(totalAttacks), chip: "UNSW-NB15 (4 CSV files)", hero: true },
+  { label: "Attack Source IPs", value: fmt((DATA.attack_sources || []).length), chip: "Source IP Frequency" },
+  { label: "Destination Ports Targeted", value: fmt((DATA.attack_destination_ports || []).length), chip: "Port Analysis" },
+  { label: "Attacked Services", value: fmt((DATA.attack_services || []).length), chip: "Service Analysis" },
+];
+document.getElementById("kpis").innerHTML = kpis.map(k =>
+  `<div class="kpi${k.hero ? " hero" : ""}"><div class="label">${k.label}</div>` +
+  `<div class="value">${k.value}</div><span class="chip">${k.chip}</span></div>`
+).join("");
+
+// attack charts
+renderBars("portChart", (DATA.attack_destination_ports || []).slice(0, 10),
+  { total: sum(DATA.attack_destination_ports), prefix: "Port " });
+renderBars("serviceChart", DATA.attack_services);
+renderBars("sourceChart", DATA.attack_sources);
+
+// traffic summary (full file if copied from HDFS, otherwise sample)
+const fullSummary = DATA.traffic_summary;
+const summary = fullSummary || DATA.traffic_summary_sample;
+document.getElementById("summaryTag").textContent = fullSummary ? "Full dataset" : "Sample: 5,000 records";
+document.getElementById("summaryDesc").innerHTML = fullSummary
+  ? "Output of <code>mapper.py</code> + <code>reducer.py</code> on the full dataset"
+  : "Output of <code>mapper.py</code> + <code>reducer.py</code> on <code>network_traffic_sample.csv</code>";
+
+if (summary && summary.LABEL) {
+  const labels = Object.fromEntries(summary.LABEL);
+  const normal = labels.Normal || 0, attack = labels.Attack || 0, total = normal + attack;
+  const split = document.getElementById("labelSplit");
+  split.innerHTML =
+    `<div class="split">` +
+    `<div style="flex:${normal};background:var(--series-1)" data-n="Normal" data-v="${normal}"></div>` +
+    `<div style="flex:${attack};background:var(--series-2)" data-n="Attack" data-v="${attack}"></div></div>` +
+    `<div class="legend"><span><i style="background:var(--series-1)"></i>Normal ${fmt(normal)} (${pct(normal, total)})</span>` +
+    `<span><i style="background:var(--series-2)"></i>Attack ${fmt(attack)} (${pct(attack, total)})</span></div>`;
+  split.querySelectorAll(".split div").forEach(d => {
+    d.onmousemove = e => showTip(e, `<b>${d.dataset.n}</b>${fmt(+d.dataset.v)} records (${pct(+d.dataset.v, total)})`);
+    d.onmouseleave = hideTip;
+  });
+}
+renderBars("categoryChart", summary && summary.ATTACK_CATEGORY);
+renderBars("protocolChart", summary && summary.PROTOCOL);
+
+// model result
+const rf = DATA.random_forest;
+const modelEl = document.getElementById("modelResult");
+if (rf && rf.accuracy !== undefined) {
+  modelEl.innerHTML =
+    `<div class="summary-box"><b>Result:</b> Random Forest classified ${fmt(rf.correct || 0)} test records correctly ` +
+    `– accuracy <b>${rf.accuracy}%</b>` + (rf.kappa !== undefined ? `, Kappa <b>${rf.kappa}</b>` : "") + `.</div>` +
+    `<pre class="raw">${rf.raw.replace(/</g, "&lt;")}</pre>`;
+} else {
+  modelEl.innerHTML =
+    `<div class="pending-box"><b>Evaluation pending.</b> Run <code>bash scripts/run_mahout_random_forest.sh</code> on the Hadoop cluster, ` +
+    `then <code>python3 scripts/build_dashboard_data.py</code>. Accuracy, Kappa and the confusion matrix will appear here.</div>`;
+}
+
+// results explorer
+const files = [
+  { name: "attack_sources.txt", cols: ["Source IP", "Attack Records"], rows: DATA.attack_sources },
+  { name: "top_10_attack_sources.txt", cols: ["Source IP", "Attack Records"], rows: DATA.top_10_attack_sources },
+  { name: "attack_services.txt", cols: ["Service", "Attack Records"], rows: DATA.attack_services },
+  { name: "attack_destination_ports.txt", cols: ["Destination Port", "Attack Records"], rows: DATA.attack_destination_ports },
+  { name: fullSummary ? "traffic_summary.txt" : "traffic_summary_sample.txt", cols: ["Group", "Key", "Count"],
+    rows: summary ? Object.entries(summary).flatMap(([g, rs]) => rs.map(r => [g, r[0], r[1]])) : null },
+].filter(f => f.rows && f.rows.length);
+
+let active = 0, query = "", sortCol = -1, sortAsc = false, page = 0;
+const PAGE = 15;
+
+function currentRows() {
+  let rows = files[active].rows.filter(r => r.join(" ").toLowerCase().includes(query));
+  if (sortCol >= 0) {
+    rows = [...rows].sort((a, b) => {
+      const x = a[sortCol], y = b[sortCol];
+      const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true });
+      return sortAsc ? c : -c;
+    });
+  }
+  return rows;
+}
+
+function renderExplorer() {
+  const f = files[active];
+  document.getElementById("tabs").innerHTML = files.map((x, i) =>
+    `<button class="${i === active ? "active" : ""}" data-i="${i}">${x.name} (${fmt(x.rows.length)})</button>`).join("");
+  document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
+    active = +b.dataset.i; sortCol = -1; page = 0; renderExplorer();
+  });
+
+  document.getElementById("exHead").innerHTML = "<tr>" + f.cols.map((c, i) =>
+    `<th data-i="${i}">${c} ${sortCol === i ? (sortAsc ? "▲" : "▼") : "↕"}</th>`).join("") + "</tr>";
+  document.querySelectorAll("#exHead th").forEach(th => th.onclick = () => {
+    const i = +th.dataset.i;
+    sortAsc = sortCol === i ? !sortAsc : false;
+    sortCol = i; renderExplorer();
+  });
+
+  const rows = currentRows();
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  page = Math.min(page, pages - 1);
+  document.getElementById("exBody").innerHTML = rows.slice(page * PAGE, page * PAGE + PAGE).map(r =>
+    "<tr>" + r.map(v => `<td class="${typeof v === "number" ? "num" : ""}">${typeof v === "number" ? fmt(v) : v}</td>`).join("") + "</tr>"
+  ).join("") || `<tr><td colspan="${f.cols.length}">No matching rows</td></tr>`;
+
+  document.getElementById("rowMeta").textContent = `${fmt(rows.length)} rows (${f.cols.length} columns)`;
+  document.getElementById("pageInfo").textContent = `Page ${page + 1} of ${pages}`;
+  document.getElementById("prevBtn").disabled = page === 0;
+  document.getElementById("nextBtn").disabled = page >= pages - 1;
+}
+
+document.getElementById("search").oninput = e => { query = e.target.value.toLowerCase(); page = 0; renderExplorer(); };
+document.getElementById("prevBtn").onclick = () => { page--; renderExplorer(); };
+document.getElementById("nextBtn").onclick = () => { page++; renderExplorer(); };
+
+document.getElementById("downloadBtn").onclick = () => {
+  const f = files[active];
+  const csv = [f.cols.join(",")].concat(currentRows().map(r => r.join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = f.name.replace(".txt", ".csv");
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+if (files.length) renderExplorer();
+
+// highlight sidebar link of the section in view
+const links = [...document.querySelectorAll(".nav a")];
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (en.isIntersecting) {
+      links.forEach(l => l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id));
+    }
+  });
+}, { rootMargin: "-20% 0px -70% 0px" });
+["overview", "attacks", "traffic", "model", "explorer"].forEach(id => observer.observe(document.getElementById(id)));
+</script>
+</body>
+</html>

@@ -157,6 +157,17 @@ The project generates the following output files:
 | random_forest_evaluation.txt | Random Forest accuracy and confusion matrix |
 | traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (from `mapper.py` + `reducer.py` on `network_traffic_sample.csv`) |
 
+### Dashboard
+
+An interactive dashboard (`dashboard/index.html`) shows the result files: attacked ports, services, source IP frequency, traffic summary, the Random Forest model details and a searchable results explorer with CSV download.
+
+```bash
+# refresh dashboard data after adding new result files
+python3 scripts/build_dashboard_data.py
+```
+
+Open `dashboard/index.html` in a browser, or enable GitHub Pages for the repository and open `/dashboard/`.
+
 ## 9. Screenshots
 
 Execution screenshots and result demonstrations are available in:
