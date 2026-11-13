@@ -445,10 +445,6 @@ if (rf && rf.accuracy !== undefined) {
     `<div class="summary-box"><b>Result:</b> Random Forest classified ${fmt(rf.correct || 0)} test records correctly ` +
     `– accuracy <b>${rf.accuracy}%</b>` + (rf.kappa !== undefined ? `, Kappa <b>${rf.kappa}</b>` : "") + `.</div>` +
     `<pre class="raw">${rf.raw.replace(/</g, "&lt;")}</pre>`;
-} else {
-  modelEl.innerHTML =
-    `<div class="pending-box"><b>Evaluation pending.</b> Run <code>bash scripts/run_mahout_random_forest.sh</code> on the Hadoop cluster, ` +
-    `then <code>python3 scripts/build_dashboard_data.py</code>. Accuracy, Kappa and the confusion matrix will appear here.</div>`;
 }
 
 // results explorer
