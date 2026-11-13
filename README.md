@@ -156,6 +156,29 @@ bash scripts/run_mahout_logistic.sh dataset/network_traffic_sample.csv   # sampl
 
 Output: `results/mahout_logistic_evaluation.txt`, model: `models/mahout_logistic.model`.
 
+#### Results (sample data, Mahout 0.13 local mode)
+
+Mahout `trainlogistic` / `runlogistic` were run in local mode (Mahout 0.13.0 job jar, Java 11) on `network_traffic_sample.csv`, same 70/30 split:
+
+| Metric | Value |
+|---|---|
+| Test records | 1,492 |
+| Accuracy | 99.06% (1,478 correct, 14 wrong) |
+| AUC | 1.00 |
+| Attacks detected | 57 / 61 (93.4% recall) |
+| Normal records flagged as attack | 10 / 1,431 |
+
+Report: `results/mahout_logistic_evaluation.txt` · Training output with learned weights: `results/mahout_logistic_training.txt`
+
+### Model comparison
+
+| Model | Platform | Accuracy | Attack recall |
+|---|---|---|---|
+| **Random Forest** | scikit-learn | **99.93%** | **100%** |
+| Logistic Regression | Apache Mahout (SGD) | 99.06% | 93.4% |
+
+**Best performing model: Random Forest.** Both models were tested on the same 1,492 sample records.
+
 ### Model 2: Random Forest with scikit-learn (sample data)
 
 Random Forest with 50 trees and 7 features per split, run on `network_traffic_sample.csv` (5,000 records):
@@ -187,6 +210,7 @@ Model: `models/random_forest_sample_sklearn.joblib` · Report: `results/random_f
 | traffic_summary_sample.txt | Normal/attack, attack category and protocol counts (`mapper.py` + `reducer.py` on the sample) |
 | random_forest_sample_evaluation.txt | Random Forest results on the 5,000-record sample |
 | mahout_logistic_evaluation.txt | Mahout Logistic Regression AUC and confusion matrix |
+| mahout_logistic_training.txt | Mahout Logistic Regression training output and learned weights |
 
 ### Dashboard
 

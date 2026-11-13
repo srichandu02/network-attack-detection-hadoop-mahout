@@ -1,0 +1,10 @@
+Mahout Logistic Regression (SGD) - evaluation
+Mahout 0.13.0 (trainlogistic / runlogistic), local mode with Java 11
+Input data   : dataset/network_traffic_sample.csv
+Train records: 3508
+Test records : 1492
+Settings     : 5 passes, 200 hashed features, rate 50, lambda 0.0001
+
+AUC = 1.00
+confusion: [[1421.0, 4.0], [10.0, 57.0]]
+entropy: [[-0.1, -1.5], [-19.8, -0.0]]

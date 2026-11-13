@@ -432,17 +432,18 @@ renderBars("protocolChart", summary && summary.PROTOCOL);
 
 // model result
 const models = [
-  { name: "Logistic Regression", platform: "Apache Mahout (SGD)", settings: "5 passes, 200 hashed features",
-    data: DATA.mahout_logistic && DATA.mahout_logistic.sample ? "Sample (5,000 records)" : "Full dataset", res: DATA.mahout_logistic, score: r => r.auc !== undefined ? "AUC " + r.auc : "–" },
+  { name: "Logistic Regression", platform: "Apache Mahout 0.13 (SGD)", settings: "5 passes, 200 hashed features",
+    data: DATA.mahout_logistic && DATA.mahout_logistic.sample ? "Sample (5,000 records)" : "Full dataset", res: DATA.mahout_logistic,
+    score: r => r.auc !== undefined ? "AUC " + r.auc.toFixed(2) : "–" },
   { name: "Random Forest", platform: "scikit-learn", settings: "50 trees, 7 features per split",
-    data: "Sample (5,000 records)", res: DATA.random_forest_sample, score: r => r.kappa !== undefined ? "Kappa " + r.kappa : "–" },
+    data: "Sample (5,000 records)", res: DATA.random_forest_sample, score: r => r.kappa !== undefined ? "Kappa " + r.kappa.toFixed(2) : "–" },
 ].filter(m => m.res && m.res.accuracy !== undefined);
 
 const modelEl = document.getElementById("modelResult");
 document.getElementById("modelRows").innerHTML = models.map(m => {
   const total = (m.res.correct || 0) + (m.res.incorrect || 0);
   return `<tr><td><b>${m.name}</b></td><td>${m.platform}</td><td>${m.settings}</td>` +
-    `<td>${m.data} – ${fmt(total)} test records</td><td class="num"><b>${m.res.accuracy}%</b></td>` +
+    `<td>${m.data} – ${fmt(total)} test records</td><td class="num"><b>${m.res.accuracy.toFixed(2)}%</b></td>` +
     `<td class="num">${m.score(m.res)}</td></tr>`;
 }).join("");
 
@@ -451,8 +452,8 @@ if (models.length) {
   modelEl.innerHTML =
     `<div class="summary-box"><b>Summary:</b> ` +
     (models.length > 1
-      ? `${best.name} (${best.platform}) achieved the highest accuracy at <b>${best.res.accuracy}%</b>.`
-      : `${best.name} (${best.platform}) classified ${fmt(best.res.correct || 0)} of ${fmt((best.res.correct || 0) + (best.res.incorrect || 0))} test records correctly – accuracy <b>${best.res.accuracy}%</b>.`) +
+      ? `${best.name} (${best.platform}) achieved the highest accuracy at <b>${best.res.accuracy.toFixed(2)}%</b>.`
+      : `${best.name} (${best.platform}) classified ${fmt(best.res.correct || 0)} of ${fmt((best.res.correct || 0) + (best.res.incorrect || 0))} test records correctly – accuracy <b>${best.res.accuracy.toFixed(2)}%</b>.`) +
     `</div>` +
     models.map(m => `<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--text-2)">${m.name} – full output</summary>` +
       `<pre class="raw">${m.res.raw.replace(/</g, "&lt;")}</pre></details>`).join("");
